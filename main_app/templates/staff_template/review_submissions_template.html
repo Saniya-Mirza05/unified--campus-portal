@@ -1,0 +1,92 @@
+{% extends 'main_app/base.html' %}
+{% block page_title %}{{page_title}}{% endblock page_title %}
+
+{% block content %}
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">{{page_title}}</h3>
+                        <div class="card-tools">
+                            <a href="{% url 'staff_view_assignments' %}" class="btn btn-primary">Back</a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-bordered">
+                            <tr>
+                                <th>#</th>
+                                <th>Student</th>
+                                <th>Submission Status</th>
+                                <th>File Name</th>
+                                <th>Action</th>
+                            </tr>
+                            {% for submission in submissions %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ submission.student.admin.first_name }} {{ submission.student.admin.last_name }}</td>
+                                <td>
+                                    {% if submission.status == 'Pending' %}
+                                    <span class="badge badge-warning">Pending</span>
+                                    {% elif submission.status == 'Under Review' %}
+                                    <span class="badge badge-primary">Under Review</span>
+                                    {% else %}
+                                    <span class="badge badge-success">Completed</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if submission.file %}
+                                        <a href="{{ submission.file.url }}" target="_blank" class="btn btn-sm btn-outline-info">View Upload</a>
+                                    {% else %}
+                                        <span class="text-muted">No File</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if submission.status == 'Under Review' %}
+                                        <button class="btn btn-success update_status" data-id="{{ submission.id }}" data-status="Completed">Mark as Completed</button>
+                                    {% elif submission.status == 'Completed' %}
+                                        <button class="btn btn-warning update_status" data-id="{{ submission.id }}" data-status="Under Review">Revert to Review</button>
+                                    {% else %}
+                                        <button class="btn btn-secondary" disabled>No Action</button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock content %}
+
+{% block custom_js %}
+<script>
+    $(".update_status").click(function(){
+        var submission_id = $(this).data('id');
+        var status = $(this).data('status');
+        
+        if(confirm("Are you sure you want to mark this assignment as " + status + "?")) {
+            $.ajax({
+                url: "{% url 'staff_update_submission_status' %}",
+                type: 'POST',
+                data: {
+                    submission_id: submission_id,
+                    status: status
+                }
+            }).done(function(response) {
+                if (response == 'True') {
+                    alert("Status Updated Successfully");
+                    location.reload();
+                } else {
+                    alert("Failed to update status.");
+                }
+            }).fail(function() {
+                alert("Error connecting to server.");
+            });
+        }
+    });
+</script>
+{% endblock custom_js %}

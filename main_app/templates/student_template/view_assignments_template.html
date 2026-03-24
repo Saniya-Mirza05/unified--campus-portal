@@ -1,0 +1,83 @@
+{% extends 'main_app/base.html' %}
+{% block page_title %}{{page_title}}{% endblock page_title %}
+
+{% block content %}
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">{{page_title}}</h3>
+                    </div>
+                    <div class="card-body">
+                        {% if messages %}
+                          {% for message in messages %}
+                          {% if message.tags == 'error' %}
+                          <div class="alert alert-danger" style="margin-top:10px">{{ message }}</div>
+                          {% endif %}
+                          {% if message.tags == 'success' %}
+                          <div class="alert alert-success" style="margin-top:10px">{{ message }}</div>
+                          {% endif %}
+                          {% endfor %}
+                        {% endif %}
+
+                        <table class="table table-bordered">
+                            <tr>
+                                <th>#</th>
+                                <th>Assignment Title</th>
+                                <th>Subject</th>
+                                <th>Description</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                            {% for data in assignment_data %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ data.assignment.title }}</td>
+                                <td>{{ data.assignment.subject.name }}</td>
+                                <td>{{ data.assignment.description }}</td>
+                                <td>
+                                    {% if data.submission.status == 'Pending' %}
+                                    <span class="badge badge-warning">Pending</span>
+                                    {% elif data.submission.status == 'Under Review' %}
+                                    <span class="badge badge-primary">Under Review</span>
+                                    {% else %}
+                                    <span class="badge badge-success">Completed</span>
+                                    {% endif %}
+                                    
+                                    {% if data.submission.file %}
+                                        <br>
+                                        <a href="{{ data.submission.file.url }}" target="_blank" class="small">View My Upload</a>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if data.submission.status != 'Completed' %}
+                                    <form action="{% url 'student_submit_assignment' %}" method="post" enctype="multipart/form-data">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="submission_id" value="{{ data.submission.id }}">
+                                        <div class="input-group input-group-sm">
+                                            <input type="file" name="assignment_file" accept=".pdf" class="form-control" required>
+                                            <span class="input-group-append">
+                                                <button type="submit" class="btn btn-success btn-flat">Upload PDF</button>
+                                            </span>
+                                        </div>
+                                    </form>
+                                    {% else %}
+                                    <button class="btn btn-sm btn-secondary" disabled>Assignment Completed</button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center">No assignments available.</td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock content %}
